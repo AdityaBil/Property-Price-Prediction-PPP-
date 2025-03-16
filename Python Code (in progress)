@@ -4,14 +4,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# File Path
-file_path = "C:\\Use-------------"
+file_path = "C:\\Users\\adity\\pythonlang\\pythonproj.xlsx"
 
 
 try:
     df = pd.read_excel(file_path)
     print("File Loaded Successfully!\n")
-    print(df.head())  # Display first few rows
+    print(df.head())
 
 except FileNotFoundError:
     print("Error: File not found. Please check the file path.")
@@ -26,59 +25,33 @@ except Exception as e:
     print(f"An unexpected error occurred: {e}")
     exit()
 
-# Data Cleaning Functions
+#Data Cleaning
 def price_per_sqft(df):
     """ Group data by location and return price per square foot. """
-    temp=df.groupby('location')['AveragePrice']
-    return temp
+    temp=df.groupby('Areas')['AveragePrice']
+    return temp.head()
 
 price_per_sqft(df)    
 
-"""def price_per_metre(df):
+def price_per_metre(df):
     print("Below are the top 5 areas with prices per metre")
-    df.iloc[1:5, 1:2] = df.iloc[1:5, 1:2].astype(int) * 0.093  # Corrected indexing
-    return df.head()""" 
+    df.iloc[1:5, 1:2] = df.iloc[1:5, 1:2].astype(int) * 0.093
+    return df.head()
 
-#price_per_metre(df)
+#Data Cleaning
+def price_per_square():
+    if 'Areas' in df.columns and 'AveragePrice' in df.columns:
+        df['price_per_sqft'] = df['price'] / df['sqft']
+    else:
+        print("Error: Columns 'sqft' or 'price' not found in the dataset.")
 
-# Apply Data Cleaning
-'''if 'Areas' in df.columns and 'AveragePrice' in df.columns:
-    df['price_per_sqft'] = df['price'] / df['sqft']
-else:
-    print("Error: Columns 'sqft' or 'price' not found in the dataset.")'''
+    return df
 
-# 3D Plot - Price vs. Location vs. Time
-fig = plt.figure(figsize=(8, 6))
-ax = fig.add_subplot(111, projection='3d')
-
-arr2=[]
-i=0
-while (i<10):
-    arr2.append(6)
-    i+=1
-
-# Extracting Data for Plot
-if 'Areas' in df.columns and 'AveragePrice' in df.columns:
-    Prices = df.iloc[:11,1:2] 
-    Time = list(range(1, 11))  # Dummy time values
-    Inflation=arr2
-    ax.plot3D(Prices,Time,Inflation,color='red')
-
-    ax.set_xlabel('AveragePrice')
-    ax.set_ylabel('Years')
-    ax.set_zlabel("Inflation")
-
-    plt.show()
-else:
-    print("Error: Columns 'location' or 'price' not found in the dataset.")
-
-import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-gdp = [7.5, 7.1, 6.8, 6.1, 4.2, -7.3, 8.7, 6.8, 6.0]
-ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9]
+gdp = [7.5, 7.1, 6.8, 6.1, 4.2, 7.3, 8.7, 6.8, 6.0]
+ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9] 
 money = [10.5, 11.2, 12, 12.8, 13.8, 14.5, 16.3, 17.5, 18.0]
 inflation_rate = [5.5, 5.1, 4.8, 4.6, 4.8, 6.6, 5.3, 6.8, 6.0]
 dict2 = {"gdp growth": gdp, "unemployment": ur, "money_supp": money}
@@ -88,16 +61,43 @@ print("Dataset:\n", indf)
 X = indf
 y = inflation_rate
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
 model = LinearRegression()
 model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
-plt.figure(figsize=(5, 3))
-sns.lineplot(x=range(len(y_test)), y=y_test, label='Actual', marker='o')
-sns.lineplot(x=range(len(y_pred)), y=y_pred, label='Predicted', marker='D')
-plt.title("Inflation Rate Prediction")
-plt.xlabel("Index")
-plt.ylabel("Inflation Rate")
-plt.legend()
-plt.show()
+def plot_inflation():
+    plt.figure(figsize=(5, 3))
+    sns.lineplot(x=range(len(y_test)), y=y_test, label='Actual', marker='o')
+    sns.lineplot(x=range(len(y_pred)), y=y_pred, label='Predicted', marker='D')
+    plt.title("Inflation Rate Prediction")
+    plt.xlabel("Index")
+    plt.ylabel("Inflation Rate")
+    plt.legend()
+    plt.show()
+
+#randomising inflation rates from 1 to 6
+arr2=inflation_rate
+'''i=0
+while (i<10):
+    arr2.append(6)
+    i+=1'''
+if 'Areas' in df.columns and 'AveragePrice' in df.columns:
+    Prices = df.iloc[:10,1:2] 
+    Time = list(range(5, 50,5))
+    Inflation=arr2
+
+def plot_price():
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot3D(Prices,Time,Inflation,color='red')
+    ax.set_xlabel('AveragePrice')
+    ax.set_ylabel('Years')
+    ax.set_zlabel("Inflation")
+    plt.show()
+
+
+plot_inflation()
+plot_price()
+
+currently working.............................
