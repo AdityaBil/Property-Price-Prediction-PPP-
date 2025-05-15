@@ -1,103 +1,124 @@
-# @title Property Prediction Management
+# Property Price Prediction based on Inflation Forecast
 
 import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+
+from sklearn.metrics import mean_squared_error, r2_score
 from mpl_toolkits.mplot3d import Axes3D
 
+
 file_path = "C:\\Users\\adity\\pythonlang\\pythonproj.xlsx"
-
-
 try:
     df = pd.read_excel(file_path)
     print("File Loaded Successfully!\n")
     print(df.head())
-
-except FileNotFoundError:
-    print("Error: File not found. Please check the file path.")
-    exit()
-except pd.errors.EmptyDataError:
-    print("Error: The file is empty.")
-    exit()
-except pd.errors.ParserError:
-    print("Error: The file could not be parsed. Check the format.")
-    exit()
 except Exception as e:
-    print(f"An unexpected error occurred: {e}")
+    print(f"Error loading file: {e}")
     exit()
 
-#Data Cleaning
+
 def price_per_sqft(df):
-    """ Group data by location and return price per square foot. """
-    temp=df.groupby('Areas')['AveragePrice']
-    return temp.head()
-
-price_per_sqft(df)    
-
-def price_per_metre(df):
-    print("Below are the top 5 areas with prices per metre")
-    df.iloc[1:5, 1:2] = df.iloc[1:5, 1:2].astype(int) * 0.093
-    return df.head()
-
-#Data Cleaning
-def price_per_square():
-    if 'Areas' in df.columns and 'AveragePrice' in df.columns:
-        df['price_per_sqft'] = df['price'] / df['sqft']
+    if 'AveragePrice' in df.columns and 'sqft' in df.columns:
+        df['price_per_sqft'] = df['AveragePrice'] / df['sqft']
+        return df[['Areas', 'price_per_sqft']].groupby('Areas').mean().sort_values(by='price_per_sqft', ascending=False)
     else:
-        print("Error: Columns 'sqft' or 'price' not found in the dataset.")
+        print("missing_data")
+        return df
 
+def price_per_square(df):
+    if 'AveragePrice' in df.columns and 'sqft' in df.columns:
+        df['price_per_sqft'] = df['AveragePrice'] / df['sqft']
     return df
 
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+
+price_per_sqft(df)
+price_per_square(df)
+
+# Random dataa
 gdp = [7.5, 7.1, 6.8, 6.1, 4.2, 7.3, 8.7, 6.8, 6.0]
-ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9] 
+ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9]
 money = [10.5, 11.2, 12, 12.8, 13.8, 14.5, 16.3, 17.5, 18.0]
 inflation_rate = [5.5, 5.1, 4.8, 4.6, 4.8, 6.6, 5.3, 6.8, 6.0]
-dict2 = {"gdp growth": gdp, "unemployment": ur, "money_supp": money}
-indf = pd.DataFrame(dict2)
-print("Dataset:\n", indf)
 
-X = indf
+indf = pd.DataFrame({"gdp growth": gdp, "unemployment": ur, "money_supp": money})
+
+from sklearn.preprocessing import StandardScaler
+X = StandardScaler().fit_transform(indf)
 y = inflation_rate
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 model = LinearRegression()
 model.fit(X_train, y_train)
-
 y_pred = model.predict(X_test)
+
+#Error normalisation
+print("R\u00b2 Score:", r2_score(y_test, y_pred))
+print("MSE:", mean_squared_error(y_test, y_pred))
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from mpl_toolkits.mplot3d import Axes3D
+
+
 def plot_inflation():
-    plt.figure(figsize=(5, 3))
+    plt.figure(figsize=(6, 4))
     sns.lineplot(x=range(len(y_test)), y=y_test, label='Actual', marker='o')
     sns.lineplot(x=range(len(y_pred)), y=y_pred, label='Predicted', marker='D')
     plt.title("Inflation Rate Prediction")
     plt.xlabel("Index")
     plt.ylabel("Inflation Rate")
     plt.legend()
+    plt.tight_layout()
     plt.show()
-
-#randomising inflation rates from 1 to 6
-arr2=inflation_rate
-'''i=0
-while (i<10):
-    arr2.append(6)
-    i+=1'''
-if 'Areas' in df.columns and 'AveragePrice' in df.columns:
-    Prices = df.iloc[:10,1:2] 
-    Time = list(range(5, 50,5))
-    Inflation=arr2
-
-def plot_price():
-    fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot3D(Prices,Time,Inflation,color='red')
-    ax.set_xlabel('AveragePrice')
-    ax.set_ylabel('Years')
-    ax.set_zlabel("Inflation")
-    plt.show()
-
 
 plot_inflation()
-plot_price()
 
-currently working.............................
+def Price_vs_inflation():
+    Prices = np.linspace(50, 100, len(y_pred))
+    Time = np.linspace(5, 10, len(y_pred))
+    Time_mesh, Prices_mesh = np.meshgrid(Time, Prices)
+    Inflation_mesh = np.tile(y_pred, (len(Prices), 1)).T
+
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(Prices_mesh, Time_mesh, Inflation_mesh, cmap='viridis')
+    ax.set_xlabel('Average Price (Lakhs)')
+    ax.set_ylabel('Years')
+    ax.set_zlabel('Predicted Inflation Rate')
+    plt.title('Inflated Price')
+    plt.tight_layout()
+    plt.show()
+
+print()
+print("Future Price Prediction")
+current_price = 75_00_000  # e.g., ₹75 lakhs
+avg_inflation = np.mean(y_pred) / 100
+nominal_growth_rate = 0.08
+real_growth = nominal_growth_rate - avg_inflation
+
+for years in [5, 7, 10]:
+    future_price = current_price * ((1 + real_growth) ** years)
+    print(f"Price after {years} years: ₹{round(future_price):,}")
+
+def plot_price_difference():
+    years = [5, 7, 10]
+    current_price = 75_00_000  # ₹75 lakhs
+    avg_inflation = np.mean(y_pred) / 100
+    nominal_growth_rate = 0.08
+    real_growth = nominal_growth_rate - avg_inflation
+
+    future_prices = [current_price * ((1 + real_growth) ** yr) for yr in years]
+
+    plt.figure(figsize=(7, 4))
+    plt.bar([f"{yr} yrs (Now)" for yr in years], [current_price]*len(years), label='Current Price', alpha=0.6)
+    plt.bar([f"{yr} yrs (Future)" for yr in years], future_prices, label='Predicted Price', alpha=0.8)
+    plt.ylabel("Price (INR)")
+    plt.title("Before vs After Property Price (Inflation Adjusted)")
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+plot_price_difference()
