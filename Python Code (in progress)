@@ -13,28 +13,20 @@ file_path = "C:\\Users\\adity\\pythonlang\\pythonproj.xlsx"
 try:
     df = pd.read_excel(file_path)
     print("File Loaded Successfully!\n")
-    print(df.head())
+    print(df.iloc[:20,:])
 except Exception as e:
     print(f"Error loading file: {e}")
     exit()
 
-
-def price_per_sqft(df):
-    if 'AveragePrice' in df.columns and 'sqft' in df.columns:
-        df['price_per_sqft'] = df['AveragePrice'] / df['sqft']
-        return df[['Areas', 'price_per_sqft']].groupby('Areas').mean().sort_values(by='price_per_sqft', ascending=False)
+def total_price(df):
+    required_area = int(input("Enter the required area in sqft: "))
+    if 'AveragePrice' in df.columns:
+        df['price_per_sqft'] = df['AveragePrice']  # Rename for clarity
+        df['total_price'] = df['price_per_sqft'] * required_area
+        return df[['Areas', 'total_price']].groupby('Areas').mean().sort_values(by='total_price', ascending=False)
     else:
         print("missing_data")
         return df
-
-def price_per_square(df):
-    if 'AveragePrice' in df.columns and 'sqft' in df.columns:
-        df['price_per_sqft'] = df['AveragePrice'] / df['sqft']
-    return df
-
-
-price_per_sqft(df)
-price_per_square(df)
 
 # Random dataa
 gdp = [7.5, 7.1, 6.8, 6.1, 4.2, 7.3, 8.7, 6.8, 6.0]
@@ -43,7 +35,7 @@ money = [10.5, 11.2, 12, 12.8, 13.8, 14.5, 16.3, 17.5, 18.0]
 inflation_rate = [5.5, 5.1, 4.8, 4.6, 4.8, 6.6, 5.3, 6.8, 6.0]
 
 indf = pd.DataFrame({"gdp growth": gdp, "unemployment": ur, "money_supp": money})
-
+print(indf)
 from sklearn.preprocessing import StandardScaler
 X = StandardScaler().fit_transform(indf)
 y = inflation_rate
@@ -54,13 +46,12 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 #Error normalisation
-print("R\u00b2 Score:", r2_score(y_test, y_pred))
+print("R2 Score:", r2_score(y_test, y_pred))
 print("MSE:", mean_squared_error(y_test, y_pred))
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
-
 
 def plot_inflation():
     plt.figure(figsize=(6, 4))
@@ -93,21 +84,25 @@ def Price_vs_inflation():
 
 print()
 print("Future Price Prediction")
-current_price = 75_00_000  # e.g., ₹75 lakhs
+user_loc =input("Enter the location ")
+user_area=int(input("Enter desired area"))
+price=df.loc[df['Areas'] == user_loc, 'AveragePrice'].iloc[0]
+area_price = price*user_area
+print(user_loc,user_area,area_price)
 avg_inflation = np.mean(y_pred) / 100
-nominal_growth_rate = 0.08
-real_growth = nominal_growth_rate - avg_inflation
+GrowthRate = 0.08
+real_growth = GrowthRate - avg_inflation
 
 for years in [5, 7, 10]:
-    future_price = current_price * ((1 + real_growth) ** years)
+    future_price = area_price * ((1 + real_growth) ** years)
     print(f"Price after {years} years: ₹{round(future_price):,}")
 
 def plot_price_difference():
     years = [5, 7, 10]
-    current_price = 75_00_000  # ₹75 lakhs
+    current_price = area_price
     avg_inflation = np.mean(y_pred) / 100
-    nominal_growth_rate = 0.08
-    real_growth = nominal_growth_rate - avg_inflation
+    GrowthRate = 0.08
+    real_growth = GrowthRate- avg_inflation
 
     future_prices = [current_price * ((1 + real_growth) ** yr) for yr in years]
 
@@ -115,10 +110,28 @@ def plot_price_difference():
     plt.bar([f"{yr} yrs (Now)" for yr in years], [current_price]*len(years), label='Current Price', alpha=0.6)
     plt.bar([f"{yr} yrs (Future)" for yr in years], future_prices, label='Predicted Price', alpha=0.8)
     plt.ylabel("Price (INR)")
-    plt.title("Before vs After Property Price (Inflation Adjusted)")
+    plt.title("Before vs After Property Price")
     plt.xticks(rotation=45)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 plot_price_difference()
+
+def plot_area_price_heatmap(df):
+    area_price_df = df[['Areas', 'AveragePrice']].groupby('Areas').mean()
+    area_price_df = area_price_df.sort_values('AveragePrice', ascending=False)
+    plt.figure(figsize=(80, 6))
+    sns.heatmap(area_price_df.T, annot=True, fmt=".0f", cmap="YlOrRd",cbar=True, linewidths=0.8)
+    plt.title("Average Total Price by Area")
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.tight_layout()
+    plt.show()
+
+plot_area_price_heatmap(df)
+Price_vs_inflation()
+
+   
+
+
+
