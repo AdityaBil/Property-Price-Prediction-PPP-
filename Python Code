@@ -2,9 +2,9 @@
 
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
+from sklearn.linear_model import LinearRegression, Ridge, ElasticNet
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import StackingRegressor, GradientBoostingRegressor
+from sklearn.ensemble import StackingRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
@@ -38,31 +38,40 @@ def calc_price_stats(df):
         return area_stats.sort_values('mean', ascending=False)
     return None
 
-gdp = [7.5, 7.1, 6.8, 6.1, 4.2, 7.3, 8.7, 6.8, 6.0]
-ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9]
-money = [10.5, 11.2, 12, 12.8, 13.8, 14.5, 16.3, 17.5, 18.0]
-inflation_rate = [5.5, 5.1, 4.8, 4.6, 4.8, 6.6, 5.3, 6.8, 6.0]
+#gdp = [7.5, 7.1, 6.8, 6.1, 4.2, 7.3, 8.7, 6.8, 6.0]
+#ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9]
+#money = [10.5, 11.2, 12, 12.8, 13.8, 14.5, 16.3, 17.5, 18.0]
+#inflation_rate = [5.5, 5.1, 4.8, 4.6, 4.8, 6.6, 5.3, 6.8, 6.0]
+gdp = [7.5, 7.1, 6.8, 6.1, 4.2, 7.3, 8.7, 6.8, 6.0, 7.2, 6.9, 7.0, 6.5, 5.8, 7.8, 8.2, 6.7, 7.4, 6.3, 7.1,
+       7.6, 6.4, 8.1, 7.9, 6.2, 7.7, 8.3, 6.6, 7.0, 6.8, 7.3, 8.0, 6.1, 7.5, 6.9, 7.2, 8.4, 6.7, 7.1, 6.5]
+
+ur = [5.0, 4.9, 4.7, 4.5, 6.1, 7.0, 6.6, 6.3, 5.9, 5.2, 4.8, 5.1, 5.5, 6.2, 4.6, 4.4, 5.3, 4.9, 5.7, 5.0,
+      4.7, 5.6, 4.3, 4.5, 5.8, 4.8, 4.2, 5.4, 5.1, 4.9, 5.0, 4.4, 6.0, 4.6, 5.2, 4.8, 4.3, 5.5, 4.9, 5.3]
+
+money = [10.5, 11.2, 12.0, 12.8, 13.8, 14.5, 16.3, 17.5, 18.0, 11.8, 12.5, 13.2, 14.0, 15.2, 11.0, 10.8, 
+         13.5, 12.2, 14.8, 11.5, 10.9, 15.0, 10.7, 11.3, 15.5, 12.0, 10.6, 14.3, 12.8, 11.7, 12.3, 10.5, 
+         16.0, 11.2, 13.0, 12.6, 10.4, 14.6, 12.1, 13.8]
+
+inflation_rate = [5.5, 5.1, 4.8, 4.6, 4.8, 6.6, 5.3, 6.8, 6.0, 5.4, 5.0, 5.2, 5.6, 6.0, 4.9, 4.7, 5.5, 5.1, 
+                 5.8, 5.3, 4.9, 5.9, 4.6, 4.8, 6.1, 5.2, 4.5, 5.7, 5.4, 5.1, 5.3, 4.7, 6.3, 4.9, 5.4, 5.2, 
+                 4.6, 5.8, 5.2, 5.6]
 
 indf = pd.DataFrame({"gdp growth": gdp, "unemployment": ur, "money_supp": money})
 print(indf)
 X = StandardScaler().fit_transform(indf)
 y = inflation_rate
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-base_lasso = Lasso(alpha=0.1, random_state=42, max_iter=5000)
-base_xgb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
-base_ridge = Ridge(alpha=1.0, random_state=42)
-base_gbm = GradientBoostingRegressor(n_estimators=50, learning_rate=0.1, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+base_xgb = XGBRegressor(n_estimators=500, learning_rate=0.3, max_depth=2, random_state=42)
+base_ridge = Ridge(alpha=0.4, random_state=42)
 
 stacked_model = StackingRegressor(
     estimators=[
-        ('lasso', base_lasso),
         ('xgb', base_xgb),
-        ('ridge', base_ridge),
-        ('gbm', base_gbm)
+        ('ridge', base_ridge)
     ],
-    final_estimator=ElasticNet(alpha=0.1, l1_ratio=0.5, random_state=42, max_iter=5000),
-    cv=3
+    final_estimator=ElasticNet(alpha=0.1, l1_ratio=0.4, random_state=42, max_iter=3000),
+    cv=4
 )
 
 stacked_model.fit(X_train, y_train)
@@ -131,19 +140,19 @@ for years in [5, 7, 10]:
 
 def plot_price_difference():
     years = [5, 7, 10]
-    current_price = area_price
+    curr_price = area_price
     avg_inflation = np.mean(y_pred) / 100
     GrowthRate = 0.08
     real_growth = GrowthRate- avg_inflation
 
-    future_prices = [current_price * ((1 + real_growth) ** yr) for yr in years]
+    future_prices = [curr_price * ((1 + real_growth) ** yr) for yr in years]
 
     plt.figure(figsize=(7, 4))
-    plt.bar([f"{yr} yrs (Now)" for yr in years], [current_price]*len(years), label='Current Price', alpha=0.6)
+    plt.bar([f"{yr} yrs (Now)" for yr in years], [curr_price]*len(years), label='Current Price', alpha=0.6)
     plt.bar([f"{yr} yrs (Future)" for yr in years], future_prices, label='Predicted Price', alpha=0.8)
     plt.ylabel("Price (INR)")
     plt.title("Before vs After Property Price")
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=45) 
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -185,6 +194,8 @@ def plot_top_areas(df, top_n=15):
     plt.tight_layout()
     plt.show()
 
+#plot_top_areas(df)
+
 import pickle
 
 with open('stacked_model.pkl', 'wb') as f:
@@ -199,5 +210,4 @@ with open('metrics.pkl', 'wb') as f:
         'r2_test': r2_test,
         'mse_test': mse_test,
         'rmse_test': rmse_test,
-        'mae_test': mae_test
-    }, f)
+        'mae_test': mae_test}, f)
