@@ -29,21 +29,9 @@ try:
         with open('metrics.pkl', 'rb') as f:
             metrics = pickle.load(f)
         
-        st.subheader("=== Model Performance Metrics ===")
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.metric("Train R2 Score", f"{metrics['r2_train']:.4f}")
-        with col2:
-            st.metric("Test R2 Score", f"{metrics['r2_test']:.4f}")
-        with col3:
-            st.metric("Test MSE", f"{metrics['mse_test']:.4f}")
-        with col4:
-            st.metric("Test RMSE", f"{metrics['rmse_test']:.4f}")
-        with col5:
-            st.metric("Test MAE", f"{metrics['mae_test']:.4f}")
 
         with st.expander("View Inflation Rate Prediction"):
-            fig1, ax1 = plt.subplots(figsize=(6, 4))
+            fig1, ax1 = plt.subplots(figsize=(10, 6))
             sns.lineplot(x=range(len(y_test)), y=y_test, label='Actual', marker='o', ax=ax1)
             sns.lineplot(x=range(len(y_pred)), y=y_pred, label='Predicted', marker='D', ax=ax1)
             ax1.set_title("Inflation Rate Prediction")
@@ -59,7 +47,7 @@ try:
             Time_mesh, Prices_mesh = np.meshgrid(Time, Prices)
             Inflation_mesh = np.tile(y_pred, (len(Prices), 1)).T
 
-            fig2 = plt.figure(figsize=(8, 6))
+            fig2 = plt.figure(figsize=(18, 9))
             ax2 = fig2.add_subplot(111, projection='3d')
             ax2.plot_surface(Prices_mesh, Time_mesh, Inflation_mesh, cmap='viridis')
             ax2.set_xlabel('Average Price (Lakhs)')
@@ -111,7 +99,7 @@ try:
                 current_price = area_price
                 future_prices_list = [current_price * ((1 + real_growth) ** yr) for yr in years]
 
-                fig3, ax3 = plt.subplots(figsize=(7, 4))
+                fig3, ax3 = plt.subplots(figsize=(15, 5))
                 ax3.bar([f"{yr} yrs (Now)" for yr in years], [current_price]*len(years), label='Current Price', alpha=0.6)
                 ax3.bar([f"{yr} yrs (Future)" for yr in years], future_prices_list, label='Predicted Price', alpha=0.8)
                 ax3.set_ylabel("Price (INR)")
@@ -139,7 +127,7 @@ try:
     area_stats = df.groupby('Areas')['AveragePrice'].agg(['mean', 'count']).reset_index()
     area_stats = area_stats.nlargest(top_n, 'mean')
     
-    fig5, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig5, axes = plt.subplots(1, 2, figsize=(14, 5))
     
     sns.barplot(data=area_stats, y='Areas', x='mean', ax=axes[0], palette='rocket')
     axes[0].set_xlabel('Average Price per Sqft (INR)', fontsize=11)
@@ -156,6 +144,17 @@ try:
     
     plt.tight_layout()
     st.pyplot(fig5)
-    
+    st.subheader("=== Model Performance Metrics ===")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.metric("Train R2 Score", f"{metrics['r2_train']:.4f}")
+    with col2:
+        st.metric("Test R2 Score", f"{metrics['r2_test']:.4f}")
+    with col3:
+        st.metric("Test MSE", f"{metrics['mse_test']:.4f}")
+    with col4:
+        st.metric("Test RMSE", f"{metrics['rmse_test']:.4f}")
+    with col5:
+        st.metric("Test MAE", f"{metrics['mae_test']:.4f}")  
 except Exception as e:
     st.error(f"Error loading file: {e}")
